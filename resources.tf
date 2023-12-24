@@ -3,14 +3,14 @@ data "yandex_vpc_subnet" "foo" {
 }
 
 resource "yandex_compute_disk" "default" {
-  name     = "disk-name"
+  name     = "disk-vps"
   type     = "network-ssd"
   zone     = "ru-central1-b"
   image_id = "fd8a98m249n8kd88lvo9"
 }
 
 resource "yandex_compute_instance" "vps" {
-  name        = "virt-machine"
+  name        = "virt-vps"
   platform_id = "standard-v1"
   zone        = "ru-central1-b"
 
@@ -47,7 +47,9 @@ resource "aws_route53_record" "www" {
   name    = "ringhton555"
   type    = "A"
   ttl     = "300"
-  records = [yandex_compute_instance.lb.network_interface.0.nat_ip_address]
+  records = [
+    join(",",flatten(yandex_lb_network_load_balancer.foo1.listener[*].external_address_spec[*].address))
+  ]
 }
 
 resource "local_file" "ansible_inventory" {
@@ -59,20 +61,20 @@ resource "local_file" "ansible_inventory" {
       ansible_ssh_private_key_file = file(var.priv_key)
       })
   filename = "${path.module}/inventory.yaml"
-#  provisioner "local-exec"{
-#    command = "sleep 60 &&  ansible-playbook nginx.yaml;"
-#  }
+  provisioner "local-exec"{
+    command = "sleep 60 &&  ansible-playbook nginx.yaml;"
+  }
 }
 
 resource "yandex_compute_disk" "lb" {
-  name     = "disk-lb"
+  name     = "disk-load"
   type     = "network-ssd"
   zone     = "ru-central1-b"
   image_id = "fd8a98m249n8kd88lvo9"
 }
 
 resource "yandex_compute_instance" "lb" {
-  name        = "virt-lb"
+  name        = "virt-load"
   platform_id = "standard-v1"
   zone        = "ru-central1-b"
 
@@ -100,8 +102,8 @@ resource "yandex_compute_instance" "lb" {
   }
 }
 
-resource "yandex_lb_target_group" "foo" {
-  name      = "my-target-group"
+resource "yandex_lb_target_group" "foo1" {
+  name      = "my-target-group1"
   region_id = "ru-central1"
 
   target {
@@ -110,8 +112,8 @@ resource "yandex_lb_target_group" "foo" {
   }
 }
 
-resource "yandex_lb_network_load_balancer" "foo" {
-  name = "my-network-load-balancer"
+resource "yandex_lb_network_load_balancer" "foo1" {
+  name = "my-network-load-balancer1"
   listener {
     name = "http"
     port = 80
@@ -120,7 +122,7 @@ resource "yandex_lb_network_load_balancer" "foo" {
     }
   }
   attached_target_group {
-    target_group_id = yandex_lb_target_group.foo.id
+    target_group_id = yandex_lb_target_group.foo1.id
 
     healthcheck {
       name = "http"

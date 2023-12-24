@@ -1,0 +1,7 @@
+- name: Install nginx on VPS
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  notify:
+    - Start and enabled nginx service
