@@ -1,0 +1,12 @@
+reg_aws=""
+sec_key=""
+acs_key=""
+cloud_id=""
+folder_id=""
+name=""
+email=""
+ssh=""
+key=""
+priv_key=""
+user=""
+

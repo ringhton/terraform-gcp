@@ -1,0 +1,25 @@
+- hosts: vps
+  become: true
+#  sudo: yes
+  tasks:
+    - name: Install nginx on VPS
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+    - name: Start and enabled nginx service
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+    - name: Copy index on VPS
+      ansible.builtin.copy:
+        src: index.html
+        dest: /var/www/html/index.html
+        owner: "root"
+        group: "root"
+        mode: "0644"
+    - name: Reload nginx service
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
